@@ -39,7 +39,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Pipeline-CRM-Setup
+          name: Rapport-Setup
           path: dist/*.exe
           retention-days: 30
 
@@ -48,6 +48,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: Pipeline CRM (build ${{ github.run_number }})
+          name: Rapport (build ${{ github.run_number }})
           files: dist/*.exe
           make_latest: true

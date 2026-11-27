@@ -1,5 +1,5 @@
 {
-  "name": "crm-platform",
+  "name": "rapport",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -50,8 +50,8 @@
   "description": "Personal CRM and cold-calling workspace",
   "author": "Hunter",
   "build": {
-    "appId": "com.huntermauro.pipelinecrm",
-    "productName": "Pipeline CRM",
+    "appId": "com.huntermauro.rapport",
+    "productName": "Rapport",
     "asar": false,
     "npmRebuild": false,
     "directories": {
@@ -93,8 +93,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Pipeline CRM",
-      "artifactName": "Pipeline-CRM-Setup-${version}.exe",
+      "shortcutName": "Rapport",
+      "artifactName": "Rapport-Setup-${version}.exe",
       "installerIcon": "electron/icon.ico",
       "uninstallerIcon": "electron/icon.ico"
     },

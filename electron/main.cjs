@@ -6,9 +6,9 @@ const http = require("node:http");
 const net = require("node:net");
 const path = require("node:path");
 
-const APP_NAME = "Pipeline CRM";
+const APP_NAME = "Rapport";
 app.setName(APP_NAME);
-if (process.platform === "win32") app.setAppUserModelId("com.huntermauro.pipelinecrm");
+if (process.platform === "win32") app.setAppUserModelId("com.huntermauro.rapport");
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -16,7 +16,7 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 const appDir = app.getAppPath();
-const dataDir = path.join(process.env.LOCALAPPDATA || app.getPath("userData"), "PipelineCRM", "data");
+const dataDir = path.join(process.env.LOCALAPPDATA || app.getPath("userData"), "Rapport", "data");
 fs.mkdirSync(dataDir, { recursive: true });
 const logFile = path.join(dataDir, "app.log");
 

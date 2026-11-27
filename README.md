@@ -1,4 +1,4 @@
-# Pipeline: personal CRM and prospecting workspace
+# Rapport: personal CRM and prospecting workspace
 
 A CRM and cold-calling workspace built for one person. It runs on your own computer, keeps every record in a local database file, and never sends your data anywhere except, optionally, call transcripts to Claude for analysis.
 
@@ -18,12 +18,12 @@ A CRM and cold-calling workspace built for one person. It runs on your own compu
 
 ## Install on Windows (no setup needed)
 
-1. Download **Pipeline-CRM-Setup-x.y.z.exe** from the repository's [Releases](../../releases) page (or from the latest *Windows installer* run under Actions).
+1. Download **Rapport-Setup-x.y.z.exe** from the repository's [Releases](../../releases) page (or from the latest *Windows installer* run under Actions).
 2. Double-click it. Windows may show "Windows protected your PC" because the installer isn't code-signed. Click **More info → Run anyway**.
-3. Open **Pipeline CRM** from the desktop or Start menu.
+3. Open **Rapport** from the desktop or Start menu.
 4. Go to **Settings** and paste your Anthropic API key to turn on AI call summaries.
 
-Your data is stored in `%LOCALAPPDATA%\PipelineCRM\data` (Help → Open data folder in the app). Uninstalling the app leaves your data in place. Clicking a phone number opens Phone Link or your default calling app.
+Your data is stored in `%LOCALAPPDATA%\Rapport\data` (Help → Open data folder in the app). Uninstalling the app leaves your data in place. Clicking a phone number opens Phone Link or your default calling app.
 
 ## Run from source (developers)
 

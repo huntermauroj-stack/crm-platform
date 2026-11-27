@@ -12,4 +12,4 @@ export async function dueTaskCount() {
   return r?.n ?? 0;
 }
 
-export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "Pipeline";
+export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "Rapport";
