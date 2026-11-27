@@ -42,6 +42,10 @@ jobs:
       - name: Package Windows installer
         run: npx electron-builder --win --x64 --publish never
 
+      - name: Check update files exist
+        shell: bash
+        run: ls dist && test -f dist/latest.yml && cat dist/latest.yml
+
       - uses: actions/upload-artifact@v4
         with:
           name: Rapport-Setup
