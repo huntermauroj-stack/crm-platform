@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@theme {
+  --color-ink-950: #08090c;
+  --color-ink-900: #0e1015;
+  --color-ink-850: #13161d;
+  --color-ink-800: #181c24;
+  --color-ink-700: #232834;
+  --color-ink-600: #313848;
+  --color-accent-300: #b4b8ff;
+  --color-accent-400: #8f95ff;
+  --color-accent-500: #6c72ff;
+  --color-accent-600: #5156e8;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-ink-950);
+  color: #e6e8ee;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-accent-500) 40%, transparent);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ink-600) transparent;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+}
