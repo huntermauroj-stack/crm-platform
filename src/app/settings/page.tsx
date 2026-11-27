@@ -1,7 +1,9 @@
 import { DATA_DIR } from "@/db";
 import { aiConfigured, ANALYSIS_MODEL } from "@/lib/analyze";
 import { WHISPER_MODEL } from "@/lib/transcribe";
-import { Badge, Card, PageHeader } from "@/components/ui";
+import { Badge, Button, Card, Input, PageHeader } from "@/components/ui";
+import { readConfig } from "@/lib/config";
+import { saveApiKey } from "@/lib/settings-actions";
 
 export const metadata = { title: "Settings" };
 
@@ -16,9 +18,36 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 export default function SettingsPage() {
   const ai = aiConfigured();
+  const saved = readConfig().anthropicApiKey;
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <PageHeader title="Settings" subtitle="Configuration lives in the .env.local file in the app folder. Restart the app after changing it." />
+      <PageHeader title="Settings" />
+
+      <Card title="Anthropic API key">
+        <form action={saveApiKey} className="space-y-3 p-4">
+          <p className="text-sm text-zinc-400">
+            Used to summarize recorded calls and suggest CRM updates. Create a key at console.anthropic.com → API keys. It&apos;s stored only on this
+            computer, in your data folder.
+          </p>
+          <div className="flex gap-2">
+            <Input
+              name="anthropicApiKey"
+              type="password"
+              autoComplete="off"
+              placeholder={saved ? `Saved: ${saved.slice(0, 10)}…${saved.slice(-4)}` : "sk-ant-…"}
+              className="flex-1"
+            />
+            <Button type="submit" variant="primary">
+              Save
+            </Button>
+          </div>
+          {saved && (
+            <button name="remove" value="1" className="text-xs text-zinc-500 hover:text-rose-300">
+              Remove saved key
+            </button>
+          )}
+        </form>
+      </Card>
 
       <Card title="Status">
         <div className="divide-y divide-ink-700/60">
@@ -29,7 +58,7 @@ export default function SettingsPage() {
               <span>
                 <Badge className="bg-amber-500/15 text-amber-300 ring-amber-500/30">Not set up</Badge>
                 <span className="ml-2 text-zinc-400">
-                  Add <code className="text-zinc-200">ANTHROPIC_API_KEY=…</code> to <code>.env.local</code>. Get a key at console.anthropic.com.
+                  Paste your API key above.
                 </span>
               </span>
             )}

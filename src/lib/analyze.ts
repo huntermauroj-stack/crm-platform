@@ -2,11 +2,12 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { CallAnalysisSchema, type CallAnalysis } from "./analysis-schema";
+import { anthropicApiKey } from "./config";
 
 export const ANALYSIS_MODEL = process.env.ANALYSIS_MODEL ?? "claude-opus-5-5";
 
 export function aiConfigured() {
-  return Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
+  return Boolean(anthropicApiKey() || process.env.ANTHROPIC_AUTH_TOKEN);
 }
 
 const SYSTEM = `You analyze recorded sales calls for the owner of an AI services business (AI automation, AI agents, and consulting for other businesses).
@@ -18,7 +19,8 @@ export async function analyzeTranscript(opts: {
   transcript: string;
   contactContext: string;
 }): Promise<CallAnalysis> {
-  const client = new Anthropic();
+  const key = anthropicApiKey();
+  const client = key ? new Anthropic({ apiKey: key }) : new Anthropic();
   const response = await client.beta.messages.parse({
     model: ANALYSIS_MODEL,
     max_tokens: 16000,

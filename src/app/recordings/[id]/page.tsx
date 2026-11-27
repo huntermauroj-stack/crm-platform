@@ -148,8 +148,8 @@ export default async function RecordingPage({ params }: PageProps<"/recordings/[
             rec.transcript &&
             !aiConfigured() && (
               <Card className="p-4 text-sm text-zinc-300">
-                Add an Anthropic API key in <code>.env.local</code> to get an AI summary and CRM suggestions for this call (see{" "}
-                <Link href="/settings" className="text-accent-300">Settings</Link>).
+                Add your Anthropic API key in <Link href="/settings" className="text-accent-300">Settings</Link> to get an AI
+                summary and CRM suggestions for this call.
               </Card>
             )
           )}

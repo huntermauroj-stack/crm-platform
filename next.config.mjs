@@ -1,7 +1,7 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   serverExternalPackages: ["@huggingface/transformers", "onnxruntime-node", "@libsql/client", "libsql"],
+  devIndicators: false,
   turbopack: {
     rules: {
       "*.css": {

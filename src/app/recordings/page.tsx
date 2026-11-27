@@ -38,8 +38,8 @@ export default async function RecordingsPage() {
       />
       {!aiConfigured() && (
         <Card className="mb-6 border-l-4 border-amber-500 p-4 text-sm text-zinc-300">
-          Transcription works now. To get AI summaries and CRM suggestions, add your Anthropic API key to <code className="text-amber-300">.env.local</code>{" "}
-          (see <Link href="/settings" className="text-accent-300">Settings</Link>).
+          Transcription works now. To get AI summaries and CRM suggestions, add your Anthropic API key in{" "}
+          <Link href="/settings" className="text-accent-300">Settings</Link>.
         </Card>
       )}
       <div className="grid gap-6 lg:grid-cols-3">

@@ -43,3 +43,6 @@ next-env.d.ts
 
 # local CRM data (database, recordings, speech models)
 /data
+
+# desktop builds
+/dist

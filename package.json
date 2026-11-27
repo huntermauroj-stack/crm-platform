@@ -13,7 +13,9 @@
     "db:migrate": "tsx scripts/migrate.mts",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
-    "seed": "tsx scripts/seed.mts"
+    "seed": "tsx scripts/seed.mts",
+    "desktop": "next build && electron .",
+    "dist:win": "next build && electron-builder --win --x64 --publish never"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.14.0",
@@ -36,10 +38,69 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "drizzle-kit": "^0.31.11",
+    "electron": "45.2.3",
+    "electron-builder": "26.18.1",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "tailwindcss": "4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^5"
+  },
+  "main": "electron/main.cjs",
+  "description": "Personal CRM and cold-calling workspace",
+  "author": "Hunter",
+  "build": {
+    "appId": "com.huntermauro.pipelinecrm",
+    "productName": "Pipeline CRM",
+    "asar": false,
+    "npmRebuild": false,
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "package.json",
+      "next.config.mjs",
+      "electron/**",
+      "public/**",
+      "drizzle/**",
+      ".next/**",
+      "!.next/cache/**",
+      "!.next/dev/**",
+      "!.next/trace*",
+      "node_modules/**",
+      "!node_modules/onnxruntime-node/bin/napi-v*/darwin/**",
+      "!node_modules/onnxruntime-node/bin/napi-v*/linux/**",
+      "!**/*.map",
+      "!**/*.md",
+      "!**/*.d.ts",
+      "!electron/after-pack.cjs"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Pipeline CRM",
+      "artifactName": "Pipeline-CRM-Setup-${version}.exe",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
+    },
+    "linux": {
+      "target": "dir"
+    },
+    "afterPack": "electron/after-pack.cjs"
   }
 }
