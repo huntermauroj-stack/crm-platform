@@ -3,7 +3,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { DATA_DIR } from "@/db";
 
-type AppConfig = { anthropicApiKey?: string };
+type AppConfig = {
+  anthropicApiKey?: string;
+  /** The services you currently sell, one per line. Used to judge which problems you can solve today. */
+  offers?: string;
+};
 
 const file = () => path.join(DATA_DIR, "config.json");
 
@@ -23,4 +27,8 @@ export function writeConfig(patch: Partial<AppConfig>) {
 /** API key saved in Settings wins over the ANTHROPIC_API_KEY environment variable. */
 export function anthropicApiKey(): string | undefined {
   return readConfig().anthropicApiKey || process.env.ANTHROPIC_API_KEY || undefined;
+}
+
+export function currentOffers(): string {
+  return readConfig().offers?.trim() ?? "";
 }

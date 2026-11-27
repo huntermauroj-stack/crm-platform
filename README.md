@@ -14,6 +14,7 @@ A CRM and cold-calling workspace built for one person. It runs on your own compu
 | **Clients** | Active clients, monthly recurring revenue, one-time revenue, and anyone you haven't spoken to in 30+ days. |
 | **Tasks** | Today and overdue, upcoming, and done. Snooze by a day or a week. |
 | **Call recordings** | Upload a recording from your phone. It's **transcribed locally** with Whisper (free and private). Then **Claude** writes a summary, pulls out pain points, objections, budget, timeline, decision makers, current tools, and rapport notes, suggests the next deal stage and follow-up, and drafts a follow-up email. You pick which updates to apply to the CRM. |
+| **Opportunities** | Every problem a prospect mentions is saved, grouped by theme across everyone you've called, and marked as solvable now, partly, or not yet. List what you sell today, and when you add a new service, **Re-check against my offers** finds the old problems you can now solve. **Make call list** turns a theme into a ready-to-dial list with a script. Problems come from recording analysis, from **Scan call notes** (Claude reads your typed notes), or from the Problems card on a contact's page. |
 | **Import / export** | CSV import with automatic column matching, duplicate detection (email or LinkedIn URL), and the option to drop everyone straight into a call list. Export all contacts as a CSV from Settings. |
 
 ## Install on Windows (no setup needed)
