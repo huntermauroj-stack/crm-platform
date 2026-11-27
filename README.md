@@ -16,7 +16,18 @@ A CRM and cold-calling workspace built for one person. It runs on your own compu
 | **Call recordings** | Upload a recording from your phone. It's **transcribed locally** with Whisper (free and private). Then **Claude** writes a summary, pulls out pain points, objections, budget, timeline, decision makers, current tools, and rapport notes, suggests the next deal stage and follow-up, and drafts a follow-up email. You pick which updates to apply to the CRM. |
 | **Import / export** | CSV import with automatic column matching, duplicate detection (email or LinkedIn URL), and the option to drop everyone straight into a call list. Export all contacts as a CSV from Settings. |
 
-## Setup (one time)
+## Install on Windows (no setup needed)
+
+1. Download **Pipeline-CRM-Setup-x.y.z.exe** from the repository's [Releases](../../releases) page (or from the latest *Windows installer* run under Actions).
+2. Double-click it. Windows may show "Windows protected your PC" because the installer isn't code-signed. Click **More info → Run anyway**.
+3. Open **Pipeline CRM** from the desktop or Start menu.
+4. Go to **Settings** and paste your Anthropic API key to turn on AI call summaries.
+
+Your data is stored in `%LOCALAPPDATA%\PipelineCRM\data` (Help → Open data folder in the app). Uninstalling the app leaves your data in place. Clicking a phone number opens Phone Link or your default calling app.
+
+## Run from source (developers)
+
+
 
 You need **Node.js 20 or newer** ([nodejs.org](https://nodejs.org), pick the LTS version).
 
@@ -27,11 +38,11 @@ npm run setup          # installs packages and creates the database
 cp .env.example .env.local   # Windows: copy .env.example .env.local
 ```
 
-To turn on AI call analysis, open `.env.local` and paste your Anthropic API key after `ANTHROPIC_API_KEY=` (create one at [console.anthropic.com](https://console.anthropic.com)). Everything else works without it.
+To turn on AI call analysis, paste your Anthropic API key in the app's Settings page, or put it in `.env.local` as `ANTHROPIC_API_KEY=` (create one at [console.anthropic.com](https://console.anthropic.com)). Everything else works without it.
 
 Want sample data to click around? Run `npm run seed`. Delete the `data` folder afterwards to start fresh.
 
-## Running it
+### Running it
 
 ```bash
 npm run app
@@ -66,5 +77,7 @@ Next.js 16 (App Router, server actions), SQLite through libSQL and Drizzle ORM, 
 | `npm run app` | Build and start the app at http://localhost:3000 |
 | `npm run dev` | Development mode with hot reload |
 | `npm run seed` | Add sample data |
+| `npm run desktop` | Build and open the desktop (Electron) version |
+| `npm run dist:win` | Build the Windows installer into `dist/` (run on Windows; CI does this automatically) |
 | `npm run db:generate` | Create a migration after editing `src/db/schema.ts` (applied automatically on next start) |
 | `npm run typecheck` / `npm run lint` | Checks |
