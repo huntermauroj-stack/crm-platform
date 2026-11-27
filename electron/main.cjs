@@ -1,6 +1,6 @@
 // Desktop shell: starts the Next.js server on a private localhost port and shows it in a window.
 const { app, BrowserWindow, shell, dialog, Menu } = require("electron");
-const { spawn, execFile } = require("node:child_process");
+const { spawn, execFile, execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const http = require("node:http");
 const net = require("node:net");
@@ -91,6 +91,73 @@ async function startServer() {
   await waitForServer(baseUrl + "/", 90000);
 }
 
+function stopServerNow() {
+  // Used before installing an update: the installer can't replace files the server still has open.
+  if (!server || server.exitCode !== null) return;
+  try {
+    if (process.platform === "win32") execFileSync("taskkill", ["/pid", String(server.pid), "/T", "/F"]);
+    else server.kill();
+  } catch (e) {
+    log("Stopping server failed: " + e.message);
+  }
+}
+
+// ---- Automatic updates (GitHub Releases) ----
+let updater = null;
+let manualCheck = false;
+
+function setupUpdates() {
+  if (!app.isPackaged) return;
+  try {
+    updater = require("electron-updater").autoUpdater;
+  } catch (e) {
+    log("Updater unavailable: " + e.message);
+    return;
+  }
+  updater.autoDownload = true;
+  updater.autoInstallOnAppQuit = true;
+  updater.logger = { info: (m) => log("[update] " + m), warn: (m) => log("[update] " + m), error: (m) => log("[update] " + m), debug: () => {} };
+  updater.on("update-not-available", () => {
+    if (manualCheck) dialog.showMessageBox(win, { type: "info", message: `You're on the latest version of ${APP_NAME} (${app.getVersion()}).` });
+    manualCheck = false;
+  });
+  updater.on("error", (e) => {
+    log("[update] error: " + (e && e.message));
+    if (manualCheck) dialog.showMessageBox(win, { type: "warning", message: "Couldn't check for updates.", detail: String(e && e.message) });
+    manualCheck = false;
+  });
+  updater.on("update-downloaded", async (info) => {
+    manualCheck = false;
+    const { response } = await dialog.showMessageBox(win, {
+      type: "info",
+      buttons: ["Restart now", "Later"],
+      defaultId: 0,
+      cancelId: 1,
+      message: `${APP_NAME} ${info.version} is ready to install.`,
+      detail: "Restart now to update, or it will install the next time you close Rapport. Your data is kept.",
+    });
+    if (response === 0) installUpdate();
+  });
+  const check = () => updater.checkForUpdates().catch((e) => log("[update] check failed: " + e.message));
+  setTimeout(check, 10000);
+  setInterval(check, 4 * 60 * 60 * 1000);
+}
+
+function installUpdate() {
+  quitting = true;
+  stopServerNow();
+  setImmediate(() => updater.quitAndInstall(true, true));
+}
+
+function checkForUpdatesManually() {
+  if (!updater) {
+    dialog.showMessageBox(win, { type: "info", message: "Updates are only available in the installed app." });
+    return;
+  }
+  manualCheck = true;
+  updater.checkForUpdates().catch(() => {});
+}
+
 function stopServer() {
   if (!server || server.exitCode !== null) return;
   if (process.platform === "win32") execFile("taskkill", ["/pid", String(server.pid), "/T", "/F"], () => {});
@@ -155,6 +222,9 @@ app.whenReady().then(async () => {
         submenu: [
           { label: "Open data folder", click: () => shell.openPath(dataDir) },
           { label: "Open log file", click: () => shell.openPath(logFile) },
+          { type: "separator" },
+          { label: "Check for updates…", click: checkForUpdatesManually },
+          { label: `Version ${app.getVersion()}`, enabled: false },
         ],
       },
     ]),
@@ -163,6 +233,7 @@ app.whenReady().then(async () => {
   try {
     await startServer();
     await win.loadURL(baseUrl + "/");
+    setupUpdates();
   } catch (e) {
     log("Startup failed: " + (e && e.stack ? e.stack : e));
     dialog.showErrorBox(APP_NAME, `${e.message}\n\nDetails are in:\n${logFile}`);
@@ -174,6 +245,7 @@ app.whenReady().then(async () => {
 
 app.on("before-quit", () => {
   quitting = true;
-  stopServer();
+  // When an update installs on quit, the server must be fully stopped first.
+  stopServerNow();
 });
 app.on("window-all-closed", () => app.quit());

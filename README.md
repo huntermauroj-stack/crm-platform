@@ -24,6 +24,8 @@ A CRM and cold-calling workspace built for one person. It runs on your own compu
 3. Open **Rapport** from the desktop or Start menu.
 4. Go to **Settings** and paste your Anthropic API key to turn on AI call summaries.
 
+**Updates install themselves.** Rapport checks GitHub for a new version when it starts (and every few hours), downloads it in the background, and asks you to restart. Help → Check for updates does it on demand. You only run the installer by hand once.
+
 Your data is stored in `%LOCALAPPDATA%\Rapport\data` (Help → Open data folder in the app). Uninstalling the app leaves your data in place. Clicking a phone number opens Phone Link or your default calling app.
 
 ## Run from source (developers)

@@ -34,6 +34,11 @@ jobs:
       - name: Build app
         run: npm run build
 
+      # Every build gets a higher version (0.2.<run number>) so installed copies see it as an update.
+      - name: Set version
+        shell: bash
+        run: npm version "0.2.${{ github.run_number }}" --no-git-tag-version --allow-same-version
+
       - name: Package Windows installer
         run: npx electron-builder --win --x64 --publish never
 
@@ -47,7 +52,11 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.run_number }}
-          name: Rapport (build ${{ github.run_number }})
-          files: dist/*.exe
+          tag_name: v0.2.${{ github.run_number }}
+          name: Rapport 0.2.${{ github.run_number }}
+          # latest.yml and the blockmap are what the app's auto-updater reads.
+          files: |
+            dist/*.exe
+            dist/*.exe.blockmap
+            dist/latest.yml
           make_latest: true
