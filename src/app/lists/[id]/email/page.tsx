@@ -5,8 +5,8 @@ import { db } from "@/db";
 import { companies, contacts, listMembers, lists } from "@/db/schema";
 import { googleAccount } from "@/lib/google";
 import { googleReady } from "@/lib/google-sync";
-import { findPreviewLink } from "@/lib/google-links";
-import { fullName } from "@/lib/format";
+import { blastRecipients, blastSubtitle } from "@/lib/blast-recipients";
+import { bestTemplate, dailyLimit, listTemplates, sentToday } from "@/lib/email-templates";
 import { Card, LinkButton, PageHeader } from "@/components/ui";
 import { BlastComposer } from "@/components/blast-composer";
 
@@ -24,26 +24,14 @@ export default async function ListEmailPage({ params }: PageProps<"/lists/[id]/e
     .where(eq(listMembers.listId, id))
     .orderBy(listMembers.position);
 
-  const recipients = rows
-    .filter((r) => r.c.email && r.c.status !== "do_not_contact")
-    .map((r) => ({
-      id: r.c.id,
-      name: fullName(r.c),
-      firstName: r.c.firstName,
-      lastName: r.c.lastName,
-      email: r.c.email!,
-      company: r.company,
-      notes: r.c.notes,
-      hasPreview: Boolean(findPreviewLink(r.c.notes)),
-    }));
-  const noEmail = rows.filter((r) => !r.c.email).length;
-  const dnc = rows.filter((r) => r.c.status === "do_not_contact").length;
+  const { recipients, noEmail, dnc } = blastRecipients(rows);
+  const templates = await listTemplates();
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <PageHeader
         title={`Email blast: ${list.name}`}
-        subtitle={`${recipients.length} of ${rows.length} contacts have an email address${noEmail ? ` · ${noEmail} without one` : ""}${dnc ? ` · ${dnc} do-not-contact skipped` : ""}`}
+        subtitle={blastSubtitle(rows.length, recipients.length, noEmail, dnc)}
         actions={<LinkButton href={`/lists/${id}`}>← Back to list</LinkButton>}
       />
       {!googleReady() ? (
@@ -59,7 +47,10 @@ export default async function ListEmailPage({ params }: PageProps<"/lists/[id]/e
           Nobody on this list has an email address yet. Add emails on the contact pages (or import a CSV with an Email column), then come back.
         </Card>
       ) : (
-        <BlastComposer listName={list.name} recipients={recipients} senderEmail={googleAccount()?.email ?? null} />
+        <BlastComposer listName={list.name} recipients={recipients} senderEmail={googleAccount()?.email ?? null} templates={templates}
+          initialTemplateId={bestTemplate(recipients, templates)}
+          dailyLimit={dailyLimit()}
+          sentToday={await sentToday()} />
       )}
     </div>
   );
