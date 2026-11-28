@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { integer, real, sqliteTable, text, index, primaryKey } from "drizzle-orm/sqlite-core";
+import { integer, real, sqliteTable, text, index, primaryKey, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 const id = () => integer("id").primaryKey({ autoIncrement: true });
 const createdAt = () =>
@@ -111,10 +111,16 @@ export const activities = sqliteTable(
     body: text("body"),
     durationSec: integer("duration_sec"),
     recordingId: integer("recording_id"),
+    /** Source id for synced items, e.g. "gmail:<id>" or "gcal:<id>". */
+    externalId: text("external_id"),
     occurredAt: integer("occurred_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
     createdAt: createdAt(),
   },
-  (t) => [index("activities_contact_idx").on(t.contactId), index("activities_occurred_idx").on(t.occurredAt)],
+  (t) => [
+    index("activities_contact_idx").on(t.contactId),
+    index("activities_occurred_idx").on(t.occurredAt),
+    uniqueIndex("activities_external_idx").on(t.externalId),
+  ],
 );
 
 export const tasks = sqliteTable(
@@ -128,9 +134,10 @@ export const tasks = sqliteTable(
     dueAt: integer("due_at", { mode: "timestamp" }),
     completedAt: integer("completed_at", { mode: "timestamp" }),
     notes: text("notes"),
+    externalId: text("external_id"),
     createdAt: createdAt(),
   },
-  (t) => [index("tasks_due_idx").on(t.dueAt)],
+  (t) => [index("tasks_due_idx").on(t.dueAt), uniqueIndex("tasks_external_idx").on(t.externalId)],
 );
 
 export const lists = sqliteTable("lists", {

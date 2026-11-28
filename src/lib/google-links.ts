@@ -64,3 +64,14 @@ export function findPreviewLink(notes: string | null | undefined) {
   const m = line?.match(/https?:\/\/\S+/);
   return m ? m[0] : "";
 }
+
+/** Merge values for one contact. Unknown names ("Owner") become "there". */
+export function mergeVars(c: { firstName: string; lastName: string | null; notes: string | null }, company: string | null) {
+  const unknown = !c.firstName || /^(owner|unknown)$/i.test(c.firstName);
+  return {
+    first: unknown ? "there" : c.firstName,
+    name: unknown ? "there" : [c.firstName, c.lastName].filter(Boolean).join(" "),
+    company: company ?? "your business",
+    preview: findPreviewLink(c.notes),
+  };
+}

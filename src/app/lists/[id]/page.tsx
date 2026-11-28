@@ -33,6 +33,9 @@ export default async function ListPage({ params }: PageProps<"/lists/[id]">) {
         actions={
           <>
             <LinkButton href={`/contacts?list=${id}`}>View as contacts</LinkButton>
+            <LinkButton href={`/lists/${id}/email`}>
+              <Icon name="mail" /> Email this list
+            </LinkButton>
             <LinkButton href={`/import?list=${id}`}>
               <Icon name="upload" /> Import into list
             </LinkButton>

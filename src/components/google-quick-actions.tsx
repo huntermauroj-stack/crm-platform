@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { calendarEventUrl, fillTemplate, findPreviewLink, gmailComposeUrl } from "@/lib/google-links";
-import { logCalendarMeeting, logGmailEmail } from "@/lib/google-actions";
+import { createMeetingViaCalendar, logCalendarMeeting, logGmailEmail, sendViaGmail } from "@/lib/google-actions";
 import { addDays, toDateInput } from "@/lib/format";
 import { Button, Field, Input, Select, Textarea, cx } from "./ui";
 import { Icon } from "./icons";
@@ -50,7 +50,9 @@ export function GoogleQuickActions({
   phone,
   notes,
   compact,
+  googleConnected = false,
 }: {
+  googleConnected?: boolean;
   contactId: number;
   firstName: string;
   fullName: string;
@@ -72,7 +74,7 @@ export function GoogleQuickActions({
     <div className={cx("w-full", compact ? "space-y-2" : "")}>
       <div className={cx("flex flex-wrap gap-2", !compact && "justify-end")}>
         <button type="button" className={cx(btnCls, open === "email" && "bg-ink-800 ring-accent-500")} onClick={() => toggle("email")}>
-          <Icon name="mail" /> Email in Gmail
+          <Icon name="mail" /> {googleConnected ? "Email" : "Email in Gmail"}
         </button>
         <button type="button" className={cx(btnCls, open === "meeting" && "bg-ink-800 ring-accent-500")} onClick={() => toggle("meeting")}>
           <Icon name="calendar" /> Book meeting
@@ -81,7 +83,7 @@ export function GoogleQuickActions({
       {saved && <p className="mt-2 text-right text-xs text-emerald-300">{saved}</p>}
       {open === "email" && (
         <EmailPanel
-          {...{ contactId, firstName, fullName, company, email, notes }}
+          {...{ contactId, firstName, fullName, company, email, notes, googleConnected }}
           onDone={(msg) => {
             setOpen(null);
             setSaved(msg);
@@ -90,7 +92,7 @@ export function GoogleQuickActions({
       )}
       {open === "meeting" && (
         <MeetingPanel
-          {...{ contactId, fullName, company, email, phone }}
+          {...{ contactId, fullName, company, email, phone, googleConnected }}
           onDone={(msg) => {
             setOpen(null);
             setSaved(msg);
@@ -112,8 +114,10 @@ function EmailPanel({
   company,
   email,
   notes,
+  googleConnected,
   onDone,
 }: {
+  googleConnected: boolean;
   contactId: number;
   firstName: string;
   fullName: string;
@@ -162,6 +166,18 @@ function EmailPanel({
     });
   };
 
+  const sendNow = () => {
+    setError(null);
+    startTx(async () => {
+      try {
+        await sendViaGmail({ contactId, to, subject, body });
+        onDone(`Sent from your Gmail to ${to} and logged on the timeline.`);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Couldn't send the email.");
+      }
+    });
+  };
+
   return (
     <Panel>
       <div className="grid gap-2 sm:grid-cols-2">
@@ -186,11 +202,19 @@ function EmailPanel({
       </Field>
       <div className="flex items-center justify-between gap-3">
         <span className="text-xs text-zinc-500">
-          {email ? "Opens Gmail with this filled in." : "Opens Gmail with this filled in. A new address is saved to the contact."}
+          {googleConnected ? "Sends from your Gmail." : "Opens Gmail with this filled in."}
+          {!email && " A new address is saved to the contact."}
         </span>
-        <Button variant="primary" onClick={send} disabled={pending}>
-          <Icon name="mail" /> Open in Gmail
-        </Button>
+        <div className="flex gap-2">
+          <Button variant={googleConnected ? "secondary" : "primary"} onClick={send} disabled={pending}>
+            {googleConnected ? "Open in Gmail instead" : <><Icon name="mail" /> Open in Gmail</>}
+          </Button>
+          {googleConnected && (
+            <Button variant="primary" onClick={sendNow} disabled={pending || !to}>
+              <Icon name="mail" /> {pending ? "Sending…" : "Send now"}
+            </Button>
+          )}
+        </div>
       </div>
       {error && <p className="text-xs text-rose-300">{error}</p>}
     </Panel>
@@ -203,8 +227,10 @@ function MeetingPanel({
   company,
   email,
   phone,
+  googleConnected,
   onDone,
 }: {
+  googleConnected: boolean;
   contactId: number;
   fullName: string;
   company: string | null;
@@ -226,13 +252,41 @@ function MeetingPanel({
   const [pending, startTx] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const book = () => {
-    setError(null);
+  const when = () => {
     const [y, m, d] = day.split("-").map(Number);
     const [hh, mm] = time.split(":").map(Number);
-    if (!y || !m || !d || Number.isNaN(hh)) return setError("Pick a date and time.");
-    const start = new Date(y, m - 1, d, hh, mm || 0);
-    const dur = Math.max(5, Number(minutes) || 30);
+    if (!y || !m || !d || Number.isNaN(hh)) return null;
+    return { start: new Date(y, m - 1, d, hh, mm || 0), dur: Math.max(5, Number(minutes) || 30) };
+  };
+
+  const createNow = () => {
+    setError(null);
+    const w = when();
+    if (!w) return setError("Pick a date and time.");
+    startTx(async () => {
+      try {
+        await createMeetingViaCalendar({
+          contactId,
+          title,
+          startIso: w.start.toISOString(),
+          durationMin: w.dur,
+          details,
+          location: phone ? `Phone: ${phone}` : undefined,
+          guest,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        });
+        onDone(guest ? `Added to your Google Calendar and invited ${guest}.` : "Added to your Google Calendar and to Tasks.");
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Couldn't create the event.");
+      }
+    });
+  };
+
+  const book = () => {
+    setError(null);
+    const w = when();
+    if (!w) return setError("Pick a date and time.");
+    const { start, dur } = w;
     window.open(
       calendarEventUrl({
         title,
@@ -285,10 +339,19 @@ function MeetingPanel({
         <Textarea value={details} onChange={(e) => setDetails(e.target.value)} className="min-h-24" />
       </Field>
       <div className="flex items-center justify-between gap-3">
-        <span className="text-xs text-zinc-500">Opens Google Calendar with this filled in.</span>
-        <Button variant="primary" onClick={book} disabled={pending}>
-          <Icon name="calendar" /> Open in Calendar
-        </Button>
+        <span className="text-xs text-zinc-500">
+          {googleConnected ? "Creates the event on your Google Calendar." : "Opens Google Calendar with this filled in."}
+        </span>
+        <div className="flex gap-2">
+          <Button variant={googleConnected ? "secondary" : "primary"} onClick={book} disabled={pending}>
+            {googleConnected ? "Open in Calendar instead" : <><Icon name="calendar" /> Open in Calendar</>}
+          </Button>
+          {googleConnected && (
+            <Button variant="primary" onClick={createNow} disabled={pending}>
+              <Icon name="calendar" /> {pending ? "Adding…" : "Add to Calendar"}
+            </Button>
+          )}
+        </div>
       </div>
       {error && <p className="text-xs text-rose-300">{error}</p>}
     </Panel>
