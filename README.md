@@ -77,16 +77,16 @@ Connect your Google account in **Settings** and you also get:
 
 Rapport talks to Google with your own private "OAuth client", so nothing passes through anyone else's servers.
 
-1. Go to [console.cloud.google.com](https://console.cloud.google.com), sign in with the Google account you email from, and create a project (any name, e.g. "Rapport").
+1. Go to [console.cloud.google.com](https://console.cloud.google.com), sign in with the account you send from (**hunter@maurowebai.com**), and create a project (any name, e.g. "Rapport").
 2. **APIs & Services → Library**: enable **Gmail API** and **Google Calendar API**.
-3. **APIs & Services → OAuth consent screen** (or **Google Auth Platform → Branding**): choose **External**, app name "Rapport", your email as support and developer contact. Save.
-4. **Audience**: add your own Gmail address as a **test user**. Then click **Publish app** so your sign-in doesn't expire every 7 days (it stays unverified, which is fine for personal use).
+3. **APIs & Services → OAuth consent screen** (or **Google Auth Platform → Branding**): app name "Rapport", your email as support and developer contact.
+4. **Audience**: with a Google Workspace account like maurowebai.com, choose **Internal**. That's it: no test users, no "unverified app" warning, and sign-in doesn't expire. (On a personal @gmail.com account you'd choose External, add yourself as a test user, and click **Publish app** so the sign-in doesn't expire every 7 days.)
 5. **Clients → Create client** (or **Credentials → Create credentials → OAuth client ID**): application type **Desktop app**, name "Rapport". Copy the **Client ID** and **Client secret**.
-6. In Rapport, go to **Settings → Gmail and Google Calendar**, paste both, click **Save**, then **Connect Google**. Your browser opens Google's sign-in. Because the app is unverified, Google shows a warning: click **Advanced → Go to Rapport (unsafe)**, tick all the boxes, and continue. When the browser says "Google is connected", go back to Rapport and click **Refresh**.
+6. In Rapport, go to **Settings → Gmail and Google Calendar**, paste both, click **Save**, then **Connect Google**. Your browser opens Google's sign-in: pick hunter@maurowebai.com and allow access. (Only on an External/personal setup does Google first warn that the app is unverified: click **Advanced → Go to Rapport**.) When the browser says "Google is connected", go back to Rapport and click **Refresh**.
 
 Tokens are stored in `config.json` in your data folder. **Disconnect** in Settings removes them and revokes access. You can also remove access any time at [myaccount.google.com/permissions](https://myaccount.google.com/permissions).
 
-> Email blasts are for people you'd reasonably expect to want to hear from you. Keep each message personal, include a way to opt out (the templates do), and stay under Gmail's daily limit (about 500 on a personal account).
+> Email blasts are for people you'd reasonably expect to want to hear from you. Keep each message personal, include a way to opt out (the templates do), and stay under Gmail's daily sending limit (about 2,000 a day on Google Workspace, 500 on a personal account). A new domain builds reputation slowly, so start with small batches.
 
 ## Your data
 

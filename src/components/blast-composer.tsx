@@ -24,14 +24,14 @@ const PRESETS = [
     label: "Free preview site",
     subject: "I built a free website preview for {company}",
     body:
-      "Hi {first},\n\nMy name is Hunter, and I run Mauro Web & AI here in the Charlotte area. I came across {company} on Google and your reviews are excellent, but I couldn't find a website for you.\n\nSo I went ahead and built you a free preview, using your real services and a few of your customers' own reviews:\n\n{preview}\n\nNo cost and no obligation. Would you be open to a quick 10-minute call this week to take a look together?\n\nThanks,\nHunter\nMauro Web & AI" +
+      "Hi {first},\n\nMy name is Hunter, and I run Mauro Web & AI here in the Charlotte area. I came across {company} on Google and your reviews are excellent, but I couldn't find a website for you.\n\nSo I went ahead and built you a free preview, using your real services and a few of your customers' own reviews:\n\n{preview}\n\nNo cost and no obligation. Would you be open to a quick 10-minute call this week to take a look together?\n\nThanks,\nHunter\nMauro Web & AI\nhunter@maurowebai.com" +
       FOOTER,
   },
   {
     label: "No website intro",
     subject: "Quick question about {company}'s website",
     body:
-      "Hi {first},\n\nI help local trades businesses around Charlotte turn their great Google reviews into more booked jobs with a simple, professional website. I noticed {company} doesn't have one yet.\n\nWould you be open to a 10-minute call this week? I can show you a few examples.\n\nThanks,\nHunter\nMauro Web & AI" +
+      "Hi {first},\n\nI help local trades businesses around Charlotte turn their great Google reviews into more booked jobs with a simple, professional website. I noticed {company} doesn't have one yet.\n\nWould you be open to a 10-minute call this week? I can show you a few examples.\n\nThanks,\nHunter\nMauro Web & AI\nhunter@maurowebai.com" +
       FOOTER,
   },
 ];
@@ -140,7 +140,7 @@ export function BlastComposer({ listName, recipients, senderEmail }: { listName:
           )}
           <p className="text-zinc-300">
             Sends {targets.length} individual email{targets.length === 1 ? "" : "s"} from {senderEmail ?? "your Gmail"}, about one per second. Each one is logged on
-            the contact&apos;s timeline. Gmail allows roughly 500 a day on a personal account.
+            the contact&apos;s timeline. Google Workspace allows about 2,000 a day (500 on personal Gmail); a new domain does best with small batches at first.
           </p>
           <Button onClick={test} disabled={busy}>
             Send a test to myself

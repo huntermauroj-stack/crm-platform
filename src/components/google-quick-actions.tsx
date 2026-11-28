@@ -10,28 +10,28 @@ import { Icon } from "./icons";
 type Template = { id: string; label: string; subject: string; body: string; needsPreview?: boolean };
 
 const TEMPLATES: Template[] = [
-  { id: "blank", label: "Blank", subject: "", body: "Hi {first},\n\n\n\nThanks,\nHunter\nMauro Web & AI" },
+  { id: "blank", label: "Blank", subject: "", body: "Hi {first},\n\n\n\nThanks,\nHunter\nMauro Web & AI\nhunter@maurowebai.com" },
   {
     id: "preview",
     label: "Free preview site",
     needsPreview: true,
     subject: "I built a free website preview for {company}",
     body:
-      "Hi {first},\n\nMy name is Hunter, and I run Mauro Web & AI here in the Charlotte area. I came across {company} on Google and your reviews are excellent, but I couldn't find a website for you.\n\nSo I went ahead and built you a free preview, using your real services and a few of your customers' own reviews:\n\n{preview}\n\nNo cost and no obligation. If you like it, I can swap in your own job photos, connect a real domain and quote form, and have it live within a couple of weeks. If not, no hard feelings.\n\nWould you be open to a quick 10-minute call this week to take a look together?\n\nThanks,\nHunter\nMauro Web & AI",
+      "Hi {first},\n\nMy name is Hunter, and I run Mauro Web & AI here in the Charlotte area. I came across {company} on Google and your reviews are excellent, but I couldn't find a website for you.\n\nSo I went ahead and built you a free preview, using your real services and a few of your customers' own reviews:\n\n{preview}\n\nNo cost and no obligation. If you like it, I can swap in your own job photos, connect a real domain and quote form, and have it live within a couple of weeks. If not, no hard feelings.\n\nWould you be open to a quick 10-minute call this week to take a look together?\n\nThanks,\nHunter\nMauro Web & AI\nhunter@maurowebai.com",
   },
   {
     id: "after-call",
     label: "Follow-up after a call",
     subject: "Great talking with you, {first}",
     body:
-      "Hi {first},\n\nThanks for taking my call today. As promised, here's a quick recap of how I can help {company} get more calls from people searching online:\n\n- \n\nLet me know a good time to talk next.\n\nThanks,\nHunter\nMauro Web & AI",
+      "Hi {first},\n\nThanks for taking my call today. As promised, here's a quick recap of how I can help {company} get more calls from people searching online:\n\n- \n\nLet me know a good time to talk next.\n\nThanks,\nHunter\nMauro Web & AI\nhunter@maurowebai.com",
   },
   {
     id: "voicemail",
     label: "After a voicemail",
     subject: "Quick question about {company}'s website",
     body:
-      "Hi {first},\n\nI just left you a voicemail. I help local trades businesses around Charlotte turn their great Google reviews into more booked jobs with a simple, professional website.\n\nWould you be open to a 10-minute call this week?\n\nThanks,\nHunter\nMauro Web & AI",
+      "Hi {first},\n\nI just left you a voicemail. I help local trades businesses around Charlotte turn their great Google reviews into more booked jobs with a simple, professional website.\n\nWould you be open to a 10-minute call this week?\n\nThanks,\nHunter\nMauro Web & AI\nhunter@maurowebai.com",
   },
 ];
 
