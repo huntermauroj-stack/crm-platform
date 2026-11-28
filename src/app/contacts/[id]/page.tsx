@@ -19,6 +19,7 @@ import { LogCallPanel } from "@/components/log-call-panel";
 import { RecordingUploader } from "@/components/recording-uploader";
 import { AddToList } from "@/components/add-to-list";
 import { GoogleQuickActions } from "@/components/google-quick-actions";
+import { googleReady } from "@/lib/google-sync";
 
 export async function generateMetadata({ params }: PageProps<"/contacts/[id]">) {
   const { id } = await params;
@@ -105,6 +106,7 @@ export default async function ContactPage({ params }: PageProps<"/contacts/[id]"
           email={contact.email}
           phone={phone}
           notes={contact.notes}
+          googleConnected={googleReady()}
         />
       </div>
 

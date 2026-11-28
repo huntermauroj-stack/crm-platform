@@ -34,20 +34,31 @@ jobs:
       - name: Build app
         run: npm run build
 
+      # Every build gets a higher version (0.2.<run number>) so installed copies see it as an update.
+      - name: Set version
+        shell: bash
+        run: npm version "0.2.${{ github.run_number }}" --no-git-tag-version --allow-same-version
+
       - name: Package Windows installer
         run: npx electron-builder --win --x64 --publish never
 
       - uses: actions/upload-artifact@v4
         with:
           name: Rapport-Setup
-          path: dist/*.exe
+          path: |
+            dist/*.exe
+            dist/latest.yml
           retention-days: 30
 
       - name: Publish release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: build-${{ github.run_number }}
-          name: Rapport (build ${{ github.run_number }})
-          files: dist/*.exe
+          # The in-app updater reads latest.yml from the newest release and downloads the installer it names.
+          tag_name: v0.2.${{ github.run_number }}
+          name: Rapport 0.2.${{ github.run_number }}
+          files: |
+            dist/*.exe
+            dist/*.exe.blockmap
+            dist/latest.yml
           make_latest: true

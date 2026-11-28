@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { integer, real, sqliteTable, text, index, primaryKey } from "drizzle-orm/sqlite-core";
+import { integer, real, sqliteTable, text, index, primaryKey, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 const id = () => integer("id").primaryKey({ autoIncrement: true });
 const createdAt = () =>
@@ -111,10 +111,19 @@ export const activities = sqliteTable(
     body: text("body"),
     durationSec: integer("duration_sec"),
     recordingId: integer("recording_id"),
+    /** Source id for synced items, e.g. "gmail:<id>" or "gcal:<id>". */
+    externalId: text("external_id"),
+    /** Set on emails sent as part of a campaign (bulk send). */
+    campaignId: integer("campaign_id").references(() => emailCampaigns.id, { onDelete: "set null" }),
     occurredAt: integer("occurred_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
     createdAt: createdAt(),
   },
-  (t) => [index("activities_contact_idx").on(t.contactId), index("activities_occurred_idx").on(t.occurredAt)],
+  (t) => [
+    index("activities_contact_idx").on(t.contactId),
+    index("activities_campaign_idx").on(t.campaignId),
+    index("activities_occurred_idx").on(t.occurredAt),
+    uniqueIndex("activities_external_idx").on(t.externalId),
+  ],
 );
 
 export const tasks = sqliteTable(
@@ -128,9 +137,10 @@ export const tasks = sqliteTable(
     dueAt: integer("due_at", { mode: "timestamp" }),
     completedAt: integer("completed_at", { mode: "timestamp" }),
     notes: text("notes"),
+    externalId: text("external_id"),
     createdAt: createdAt(),
   },
-  (t) => [index("tasks_due_idx").on(t.dueAt)],
+  (t) => [index("tasks_due_idx").on(t.dueAt), uniqueIndex("tasks_external_idx").on(t.externalId)],
 );
 
 export const lists = sqliteTable("lists", {
@@ -188,3 +198,22 @@ export type Task = typeof tasks.$inferSelect;
 export type List = typeof lists.$inferSelect;
 export type ListMember = typeof listMembers.$inferSelect;
 export type Recording = typeof recordings.$inferSelect;
+
+/** Saved email templates. Merge fields: {first} {name} {company} {preview} {website} {issue}. */
+export const emailTemplates = sqliteTable("email_templates", {
+  id: id(),
+  name: text("name").notNull(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+/** One bulk send: what was sent and to whom (the sends are activities with this campaign id). */
+export const emailCampaigns = sqliteTable("email_campaigns", {
+  id: id(),
+  name: text("name").notNull(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  createdAt: createdAt(),
+});

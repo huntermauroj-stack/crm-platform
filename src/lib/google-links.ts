@@ -48,13 +48,20 @@ export function calendarEventUrl({
   return `https://calendar.google.com/calendar/render?${qs(p)}`;
 }
 
-/** Fills {first}, {name}, {company} and {preview} in a template. */
-export function fillTemplate(text: string, vars: { first: string; name: string; company: string; preview: string }) {
-  return text
-    .replaceAll("{first}", vars.first)
-    .replaceAll("{name}", vars.name)
-    .replaceAll("{company}", vars.company)
-    .replaceAll("{preview}", vars.preview);
+export type MergeVars = { first: string; name: string; company: string; preview: string; website: string; issue: string };
+
+export const MERGE_FIELDS = ["first", "name", "company", "preview", "website", "issue"] as const;
+
+/** Fills {first}, {name}, {company}, {preview}, {website} and {issue} in a template. */
+export function fillTemplate(text: string, vars: Partial<MergeVars> & { first: string; name: string; company: string; preview: string }) {
+  let out = text;
+  for (const k of MERGE_FIELDS) out = out.replaceAll(`{${k}}`, vars[k] ?? "");
+  return out;
+}
+
+/** Merge fields a template uses that this contact has no value for (e.g. no preview link in their notes). */
+export function missingFields(text: string, vars: MergeVars) {
+  return (["preview", "website", "issue"] as const).filter((k) => text.includes(`{${k}}`) && !vars[k]);
 }
 
 /** Pulls the first claude.ai or http(s) preview link out of a contact's notes, if any. */
@@ -63,4 +70,33 @@ export function findPreviewLink(notes: string | null | undefined) {
   const line = notes.split("\n").find((l) => /preview site/i.test(l));
   const m = line?.match(/https?:\/\/\S+/);
   return m ? m[0] : "";
+}
+
+/** The site listed in a contact's notes ("Current website: ..."), if any. */
+export function findWebsite(notes: string | null | undefined) {
+  const m = notes?.match(/^Current website:\s*(\S+)/im);
+  return m ? m[1] : "";
+}
+
+/** What's wrong with their current site, from "Lead type: Broken website (Website does not load ...)". */
+export function findWebsiteIssue(notes: string | null | undefined) {
+  const line = notes?.split("\n").find((l) => /^Lead type:\s*(broken|outdated|free\/basic)/i.test(l));
+  if (!line) return "";
+  const open = line.indexOf("(");
+  if (open < 0 || !line.trimEnd().endsWith(")")) return "";
+  const issue = line.slice(open + 1, line.trimEnd().length - 1).trim();
+  return issue ? issue.charAt(0).toLowerCase() + issue.slice(1) : "";
+}
+
+/** Merge values for one contact. Unknown names ("Owner") become "there". */
+export function mergeVars(c: { firstName: string; lastName: string | null; notes: string | null }, company: string | null): MergeVars {
+  const unknown = !c.firstName || /^(owner|unknown)$/i.test(c.firstName);
+  return {
+    first: unknown ? "there" : c.firstName,
+    name: unknown ? "there" : [c.firstName, c.lastName].filter(Boolean).join(" "),
+    company: company ?? "your business",
+    preview: findPreviewLink(c.notes),
+    website: findWebsite(c.notes),
+    issue: findWebsiteIssue(c.notes),
+  };
 }

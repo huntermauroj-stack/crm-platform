@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { and, desc, eq, sql } from "drizzle-orm";
 import QRCode from "qrcode";
 import { GoogleQuickActions } from "@/components/google-quick-actions";
+import { googleReady } from "@/lib/google-sync";
 import { db } from "@/db";
 import { activities, companies, contacts, listMembers, lists, deals } from "@/db/schema";
 import { Badge, Card, LinkButton, Empty } from "@/components/ui";
@@ -151,6 +152,7 @@ export default async function CallPage({ params }: PageProps<"/lists/[id]/call">
                 email={c.email}
                 phone={phone}
                 notes={c.notes}
+                googleConnected={googleReady()}
               />
             </div>
           </Card>

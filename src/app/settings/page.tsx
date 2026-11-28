@@ -3,7 +3,10 @@ import { aiConfigured, ANALYSIS_MODEL } from "@/lib/analyze";
 import { WHISPER_MODEL } from "@/lib/transcribe";
 import { Badge, Button, Card, Input, PageHeader } from "@/components/ui";
 import { readConfig } from "@/lib/config";
-import { saveApiKey } from "@/lib/settings-actions";
+import { saveApiKey, saveGoogleClient } from "@/lib/settings-actions";
+import { googleAccount, googleClient } from "@/lib/google";
+import { GoogleConnectButtons } from "@/components/google-connect";
+import { dateTime } from "@/lib/format";
 
 export const metadata = { title: "Settings" };
 
@@ -16,9 +19,15 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
+export const dynamic = "force-dynamic";
+
 export default function SettingsPage() {
   const ai = aiConfigured();
-  const saved = readConfig().anthropicApiKey;
+  const cfg = readConfig();
+  const saved = cfg.anthropicApiKey;
+  const gClient = googleClient();
+  const gAccount = googleAccount();
+  const lastSync = cfg.googleLastSync;
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader title="Settings" />
@@ -47,6 +56,53 @@ export default function SettingsPage() {
             </button>
           )}
         </form>
+      </Card>
+
+      <Card title="Gmail and Google Calendar">
+        <div className="space-y-4 p-4 text-sm">
+          <p className="text-zinc-400">
+            Once connected, emails with your contacts and meetings they&apos;re invited to show up on their timelines (synced every 15 minutes), and the Email
+            and Book meeting buttons send and create events directly. Email blasts send from your Gmail. Everything stays on this computer.
+          </p>
+          <form action={saveGoogleClient} className="space-y-2">
+            <div className="text-xs font-medium text-zinc-500">Step 1: your Google OAuth client (one-time setup; see the guide in the README)</div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Input name="googleClientId" autoComplete="off" placeholder={gClient ? `Saved: ${gClient.id.slice(0, 14)}…` : "Client ID (…apps.googleusercontent.com)"} />
+              <Input name="googleClientSecret" type="password" autoComplete="off" placeholder={gClient ? "Secret saved" : "Client secret (GOCSPX-…)"} />
+            </div>
+            <div className="flex items-center gap-3">
+              <Button type="submit">Save</Button>
+              {gClient && (
+                <button name="remove" value="1" className="text-xs text-zinc-500 hover:text-rose-300">
+                  Remove client
+                </button>
+              )}
+            </div>
+          </form>
+          {gClient && (
+            <div className="space-y-2 border-t border-ink-700 pt-4">
+              <div className="text-xs font-medium text-zinc-500">Step 2: sign in</div>
+              <p className="text-zinc-300">
+                {gAccount ? (
+                  <>
+                    <Badge className="bg-emerald-500/15 text-emerald-300 ring-emerald-500/30">Connected</Badge>{" "}
+                    <span className="ml-1">{gAccount.email ?? "Google account"}</span>
+                  </>
+                ) : (
+                  <Badge className="bg-amber-500/15 text-amber-300 ring-amber-500/30">Not connected</Badge>
+                )}
+              </p>
+              {gAccount && lastSync && (
+                <p className={lastSync.error ? "text-xs text-rose-300" : "text-xs text-zinc-500"}>
+                  {lastSync.error
+                    ? `Last sync failed: ${lastSync.error}`
+                    : `Last synced ${dateTime(new Date(lastSync.at))}: ${lastSync.emails} new emails, ${lastSync.meetings} new meetings.`}
+                </p>
+              )}
+              <GoogleConnectButtons connected={Boolean(gAccount)} />
+            </div>
+          )}
+        </div>
       </Card>
 
       <Card title="Status">
