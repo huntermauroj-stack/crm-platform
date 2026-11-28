@@ -107,3 +107,17 @@ Next.js 16 (App Router, server actions), SQLite through libSQL and Drizzle ORM, 
 | `npm run dist:win` | Build the Windows installer into `dist/` (run on Windows; CI does this automatically) |
 | `npm run db:generate` | Create a migration after editing `src/db/schema.ts` (applied automatically on next start) |
 | `npm run typecheck` / `npm run lint` | Checks |
+
+## Emails
+
+- **Contacts → tick people → Email selected** opens a send screen for just those contacts. Pick a template, check the preview, send a test to yourself, then send. Each email goes out individually from your Gmail and is logged on the contact's timeline.
+- **Emails** (sidebar) has four tabs:
+  - **Activity**: every email to and from your contacts (Rapport sends plus Gmail sync), searchable.
+  - **Follow-ups**: people whose last email to you is unanswered, and people you emailed 3+ days ago who haven't replied. Tick and email them from there.
+  - **Campaigns**: each bulk send with sent, replied and reply rate. A campaign page lists who replied and has a one-click "follow up with everyone who didn't reply".
+  - **Templates**: edit your template library. Merge fields: `{first}`, `{name}`, `{company}`, `{preview}` (preview-site link from notes), `{website}` and `{issue}` (current site and what's wrong with it, from notes). Contacts missing a field a template uses are skipped.
+- **Daily send limit** (Templates tab, default 150): bulk sends stop once Rapport has sent that many emails today, to protect a new domain's reputation.
+
+## Updates
+
+Rapport checks GitHub Releases of this repo at startup and every 4 hours (Help → Check for updates… does it on demand). New versions download in the background, then Rapport offers **Restart and update**; your data folder isn't touched. A release is published by the Windows installer workflow on every push to `main`, versioned `0.2.<run number>`.

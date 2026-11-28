@@ -4,16 +4,25 @@ import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { activities, companies, contacts } from "@/db/schema";
-import { fillTemplate, mergeVars } from "./google-links";
+import { fillTemplate, mergeVars, missingFields } from "./google-links";
 
 export type BlastResult = { contactId: number; ok: boolean; error?: string };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Sends one batch of a blast from your Gmail. The page calls this a few contacts at a time to show progress. */
-export async function sendBlastBatch(input: { contactIds: number[]; subject: string; body: string; blastName: string }): Promise<BlastResult[]> {
+export async function sendBlastBatch(input: {
+  contactIds: number[];
+  subject: string;
+  body: string;
+  blastName: string;
+  campaignId?: number;
+}): Promise<BlastResult[]> {
   const { sendGmail } = await import("./google");
+  const { dailyLimit, sentToday } = await import("./email-templates");
   if (!input.subject.trim() || !input.body.trim()) throw new Error("Add a subject and a message.");
+  const limit = dailyLimit();
+  let sentSoFar = await sentToday();
   const rows = await db
     .select({ c: contacts, company: companies.name })
     .from(contacts)
@@ -30,8 +39,13 @@ export async function sendBlastBatch(input: { contactIds: number[]; subject: str
       continue;
     }
     const vars = mergeVars(c, company);
-    if (/\{preview\}/.test(input.subject + input.body) && !vars.preview) {
-      out.push({ contactId: c.id, ok: false, error: "No preview link in notes" });
+    if (sentSoFar >= limit) {
+      out.push({ contactId: c.id, ok: false, error: `Daily send limit reached (${limit}). Change it under Emails, or send the rest tomorrow.` });
+      break;
+    }
+    const missing = missingFields(input.subject + input.body, vars);
+    if (missing.length) {
+      out.push({ contactId: c.id, ok: false, error: `No ${missing.join(" or ")} in their notes` });
       continue;
     }
     const subject = fillTemplate(input.subject, vars);
@@ -47,9 +61,11 @@ export async function sendBlastBatch(input: { contactIds: number[]; subject: str
         body: `To: ${c.email}\n\n${body}`,
         occurredAt: now,
         externalId: `gmail:${sent.id}:${c.id}`,
+        campaignId: input.campaignId ?? null,
       }).onConflictDoNothing();
       await db.update(contacts).set({ lastContactedAt: now, updatedAt: now }).where(eq(contacts.id, c.id));
       out.push({ contactId: c.id, ok: true });
+      sentSoFar++;
     } catch (e) {
       out.push({ contactId: c.id, ok: false, error: e instanceof Error ? e.message : String(e) });
       if (/Google 4(01|03|29)|expired|isn't connected/i.test(String(e))) break;

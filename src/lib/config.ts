@@ -13,6 +13,9 @@ type AppConfig = {
   /** In-flight sign-in: PKCE verifier and redirect URI, keyed by the state value. */
   googlePending?: { state: string; verifier: string; redirectUri: string; createdAt: number };
   googleLastSync?: { at: number; emails: number; meetings: number; error?: string };
+  emailTemplatesSeeded?: boolean;
+  /** Most emails Rapport will send through Gmail in one day (bulk sends stop there). */
+  emailDailyLimit?: number;
 };
 
 const file = () => path.join(DATA_DIR, "config.json");

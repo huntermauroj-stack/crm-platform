@@ -2,7 +2,8 @@
 
 import { useMemo, useRef, useState } from "react";
 import { sendBlastBatch, sendBlastTest, type BlastResult } from "@/lib/blast-actions";
-import { fillTemplate, mergeVars } from "@/lib/google-links";
+import { createCampaign, saveTemplate } from "@/lib/email-actions";
+import { fillTemplate, mergeVars, missingFields } from "@/lib/google-links";
 import { Button, Card, Field, Input, Textarea } from "./ui";
 import { Icon } from "./icons";
 
@@ -14,31 +15,35 @@ type Recipient = {
   email: string;
   company: string | null;
   notes: string | null;
-  hasPreview: boolean;
 };
 
-const FOOTER = "\n\n--\nIf you'd rather not hear from me, just reply and let me know.";
-
-const PRESETS = [
-  {
-    label: "Free preview site",
-    subject: "I built a free website preview for {company}",
-    body:
-      "Hi {first},\n\nMy name is Hunter, and I run Mauro Web & AI here in the Charlotte area. I came across {company} on Google and your reviews are excellent, but I couldn't find a website for you.\n\nSo I went ahead and built you a free preview, using your real services and a few of your customers' own reviews:\n\n{preview}\n\nNo cost and no obligation. Would you be open to a quick 10-minute call this week to take a look together?\n\nThanks,\nHunter\nMauro Web & AI\nhunter@maurowebai.com" +
-      FOOTER,
-  },
-  {
-    label: "No website intro",
-    subject: "Quick question about {company}'s website",
-    body:
-      "Hi {first},\n\nI help local trades businesses around Charlotte turn their great Google reviews into more booked jobs with a simple, professional website. I noticed {company} doesn't have one yet.\n\nWould you be open to a 10-minute call this week? I can show you a few examples.\n\nThanks,\nHunter\nMauro Web & AI\nhunter@maurowebai.com" +
-      FOOTER,
-  },
-];
-
-export function BlastComposer({ listName, recipients, senderEmail }: { listName: string; recipients: Recipient[]; senderEmail: string | null }) {
-  const [subject, setSubject] = useState(PRESETS[0].subject);
-  const [body, setBody] = useState(PRESETS[0].body);
+export function BlastComposer({
+  listName,
+  recipients,
+  senderEmail,
+  templates,
+  initialTemplateId,
+  dailyLimit,
+  sentToday: sentAtOpen,
+}: {
+  listName: string;
+  recipients: Recipient[];
+  senderEmail: string | null;
+  templates: { id: number; name: string; subject: string; body: string }[];
+  initialTemplateId?: number;
+  dailyLimit: number;
+  sentToday: number;
+}) {
+  const first = templates.find((x) => x.id === initialTemplateId) ?? templates[0];
+  const [tplId, setTplId] = useState<number | null>(first?.id ?? null);
+  const [subject, setSubject] = useState(first?.subject ?? "");
+  const [body, setBody] = useState(first?.body ?? "");
+  const [campaignName, setCampaignName] = useState(
+    `${listName}: ${first?.name ?? "Email"} (${new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })})`,
+  );
+  const campaignId = useRef<number | null>(null);
+  // Electron has no window.prompt, so "Save as template" asks for the name inline.
+  const [saveName, setSaveName] = useState<string | null>(null);
   const [onlyPreview, setOnlyPreview] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -47,9 +52,17 @@ export function BlastComposer({ listName, recipients, senderEmail }: { listName:
   const stop = useRef(false);
 
   const usesPreview = /\{preview\}/.test(subject + body);
+  const missingFor = useMemo(() => {
+    const text = subject + body;
+    return new Map(recipients.map((r) => [r.id, missingFields(text, mergeVars(r, r.company))]));
+  }, [recipients, subject, body]);
+  const skipped = recipients.filter((r) => missingFor.get(r.id)!.length > 0);
   const targets = useMemo(
-    () => recipients.filter((r) => !results[r.id]?.ok && (!onlyPreview && !usesPreview ? true : r.hasPreview)),
-    [recipients, results, onlyPreview, usesPreview],
+    () =>
+      recipients.filter(
+        (r) => !results[r.id]?.ok && missingFor.get(r.id)!.length === 0 && (!onlyPreview || Boolean(mergeVars(r, r.company).preview)),
+      ),
+    [recipients, results, onlyPreview, missingFor],
   );
   const sample = targets[0] ?? recipients[0];
   const vars = mergeVars(sample, sample.company);
@@ -68,16 +81,49 @@ export function BlastComposer({ listName, recipients, senderEmail }: { listName:
     setBusy(false);
   };
 
+  // Count from the figure at page open; the page re-renders with a fresh count after sends, which would double up.
+  const [sentToday] = useState(sentAtOpen);
+  const leftToday = Math.max(0, dailyLimit - sentToday - sent);
+
+  const pickTemplate = (id: number) => {
+    const x = templates.find((y) => y.id === id);
+    if (!x) return;
+    setTplId(id);
+    setSubject(x.subject);
+    setBody(x.body);
+    setCampaignName((n) => n.replace(/: .*\(/, `: ${x.name} (`));
+  };
+
+  const saveAsTemplate = async () => {
+    const name = saveName?.trim();
+    if (!name) return;
+    try {
+      const id = await saveTemplate({ name, subject, body });
+      setTplId(id);
+      setSaveName(null);
+      setMsg(`Saved "${name}" to your templates.`);
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : String(e));
+    }
+  };
+
   const sendAll = async () => {
     setBusy(true);
     setMsg(null);
     stop.current = false;
     const ids = targets.map((t) => t.id);
+    try {
+      campaignId.current ??= await createCampaign({ name: campaignName, subject, body });
+    } catch (e) {
+      setMsg(`Couldn't start the campaign: ${e instanceof Error ? e.message : String(e)}`);
+      setBusy(false);
+      return;
+    }
     for (let i = 0; i < ids.length && !stop.current; i += 5) {
       try {
-        const batch = await sendBlastBatch({ contactIds: ids.slice(i, i + 5), subject, body, blastName: listName });
+        const batch = await sendBlastBatch({ contactIds: ids.slice(i, i + 5), subject, body, blastName: campaignName, campaignId: campaignId.current ?? undefined });
         setResults((prev) => ({ ...prev, ...Object.fromEntries(batch.map((r) => [r.contactId, r])) }));
-        const fatal = batch.find((r) => !r.ok && r.error && /Google 4(01|03|29)|expired|isn't connected/i.test(r.error));
+        const fatal = batch.find((r) => !r.ok && r.error && /Google 4(01|03|29)|expired|isn't connected|Daily send limit/i.test(r.error));
         if (fatal) {
           setMsg(`Stopped: ${fatal.error}`);
           break;
@@ -96,28 +142,45 @@ export function BlastComposer({ listName, recipients, senderEmail }: { listName:
       <div className="space-y-4 lg:col-span-3">
         <Card className="space-y-3 p-4">
           <div className="flex flex-wrap gap-2">
-            {PRESETS.map((p) => (
-              <Button
-                key={p.label}
-                size="sm"
-                onClick={() => {
-                  setSubject(p.subject);
-                  setBody(p.body);
-                }}
-              >
-                {p.label}
+            {templates.map((x) => (
+              <Button key={x.id} size="sm" variant={x.id === tplId ? "primary" : "secondary"} onClick={() => pickTemplate(x.id)}>
+                {x.name}
               </Button>
             ))}
           </div>
+          <Field label="Campaign name">
+            <Input value={campaignName} onChange={(e) => setCampaignName(e.target.value)} />
+          </Field>
           <Field label="Subject">
             <Input value={subject} onChange={(e) => setSubject(e.target.value)} />
           </Field>
           <Field label="Message">
             <Textarea value={body} onChange={(e) => setBody(e.target.value)} className="min-h-72 font-mono text-[13px]" />
           </Field>
+          <div className="flex items-center justify-end gap-2">
+            {saveName === null ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setSaveName(`${templates.find((x) => x.id === tplId)?.name ?? "My template"} (edited)`)}
+              >
+                Save as template
+              </Button>
+            ) : (
+              <>
+                <Input value={saveName} onChange={(e) => setSaveName(e.target.value)} className="!w-64 !py-1" aria-label="Template name" />
+                <Button size="sm" variant="primary" onClick={saveAsTemplate}>
+                  Save
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setSaveName(null)}>
+                  Cancel
+                </Button>
+              </>
+            )}
+          </div>
           <p className="text-xs text-zinc-500">
             Merge fields: <code>{"{first}"}</code> first name (&quot;there&quot; if unknown), <code>{"{name}"}</code>, <code>{"{company}"}</code>,{" "}
-            <code>{"{preview}"}</code> preview-site link from the contact&apos;s notes. Contacts without a preview link are skipped when the message uses it.
+            <code>{"{preview}"}</code> preview-site link, <code>{"{website}"}</code> their current site, <code>{"{issue}"}</code> what&apos;s wrong with it (the last three come from the contact&apos;s notes). Contacts missing a field the message uses are skipped.
           </p>
         </Card>
       </div>
@@ -138,9 +201,19 @@ export function BlastComposer({ listName, recipients, senderEmail }: { listName:
               Only contacts with a preview site
             </label>
           )}
+          {skipped.length > 0 && (
+            <p className="text-xs text-amber-300">
+              Skipping {skipped.length} who {skipped.length === 1 ? "is" : "are"} missing a merge field this message uses (for example no preview link, or no
+              website issue in their notes). Pick a different template to reach them.
+            </p>
+          )}
           <p className="text-zinc-300">
             Sends {targets.length} individual email{targets.length === 1 ? "" : "s"} from {senderEmail ?? "your Gmail"}, about one per second. Each one is logged on
             the contact&apos;s timeline. Google Workspace allows about 2,000 a day (500 on personal Gmail); a new domain does best with small batches at first.
+          </p>
+          <p className={`text-xs ${leftToday < targets.length ? "text-amber-300" : "text-zinc-500"}`}>
+            Daily limit: {sentToday + sent} of {dailyLimit} sent today.
+            {leftToday < targets.length && ` Only ${leftToday} more will go out today; send the rest tomorrow or raise the limit under Emails.`}
           </p>
           <Button onClick={test} disabled={busy}>
             Send a test to myself

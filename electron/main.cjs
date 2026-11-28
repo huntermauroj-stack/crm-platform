@@ -141,6 +141,62 @@ app.on("second-instance", () => {
   }
 });
 
+// Updates: new versions are published as GitHub releases of this repo (see .github/workflows/windows-installer.yml).
+// Rapport checks at startup and every few hours, downloads in the background, then offers a one-click restart.
+let updater = null;
+let manualCheck = false;
+
+function setupUpdater() {
+  if (!app.isPackaged) return;
+  try {
+    ({ autoUpdater: updater } = require("electron-updater"));
+  } catch (e) {
+    log("Updater unavailable: " + e.message);
+    return;
+  }
+  updater.autoDownload = true;
+  updater.autoInstallOnAppQuit = true;
+  updater.logger = { info: (m) => log("[update] " + m), warn: (m) => log("[update] " + m), error: (m) => log("[update] " + m), debug: () => {} };
+  updater.on("update-available", (info) => log(`[update] Downloading ${info.version}`));
+  updater.on("update-not-available", () => {
+    if (manualCheck) dialog.showMessageBox(win, { type: "info", message: "Rapport is up to date.", detail: `You have version ${app.getVersion()}.` });
+    manualCheck = false;
+  });
+  updater.on("error", (e) => {
+    log("[update] " + (e && e.stack ? e.stack : e));
+    if (manualCheck) dialog.showMessageBox(win, { type: "warning", message: "Couldn't check for updates.", detail: String(e && e.message ? e.message : e) });
+    manualCheck = false;
+  });
+  updater.on("update-downloaded", async (info) => {
+    manualCheck = false;
+    const { response } = await dialog.showMessageBox(win, {
+      type: "info",
+      buttons: ["Restart and update", "Later"],
+      defaultId: 0,
+      cancelId: 1,
+      message: `Rapport ${info.version} is ready to install.`,
+      detail: "Your contacts and settings stay as they are. If you choose Later, it installs the next time you close Rapport.",
+    });
+    if (response === 0) {
+      quitting = true;
+      stopServer();
+      setImmediate(() => updater.quitAndInstall(true, true));
+    }
+  });
+  const check = () => updater.checkForUpdates().catch(() => {});
+  setTimeout(check, 15_000);
+  setInterval(check, 4 * 60 * 60 * 1000);
+}
+
+function checkForUpdatesNow() {
+  if (!updater) {
+    dialog.showMessageBox(win, { type: "info", message: "Updates are only available in the installed app." });
+    return;
+  }
+  manualCheck = true;
+  updater.checkForUpdates().catch(() => {});
+}
+
 app.whenReady().then(async () => {
   Menu.setApplicationMenu(
     Menu.buildFromTemplate([
@@ -155,6 +211,9 @@ app.whenReady().then(async () => {
         submenu: [
           { label: "Open data folder", click: () => shell.openPath(dataDir) },
           { label: "Open log file", click: () => shell.openPath(logFile) },
+          { type: "separator" },
+          { label: "Check for updates…", click: checkForUpdatesNow },
+          { label: `About ${APP_NAME}`, click: () => dialog.showMessageBox(win, { type: "info", message: `${APP_NAME} ${app.getVersion()}` }) },
         ],
       },
     ]),
@@ -163,6 +222,7 @@ app.whenReady().then(async () => {
   try {
     await startServer();
     await win.loadURL(baseUrl + "/");
+    setupUpdater();
   } catch (e) {
     log("Startup failed: " + (e && e.stack ? e.stack : e));
     dialog.showErrorBox(APP_NAME, `${e.message}\n\nDetails are in:\n${logFile}`);
