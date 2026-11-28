@@ -2,12 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { activities, companies, contacts, deals, listMembers, lists, recordings } from "@/db/schema";
+import { activities, companies, contacts, deals, listMembers, lists, problems, recordings } from "@/db/schema";
+import { createProblem } from "@/lib/problem-actions";
+import { existingThemes } from "@/lib/problems";
 import { deleteContact, updateContact, removeFromList } from "@/lib/actions";
 import { contactTasks } from "@/lib/task-queries";
 import { fullName, initials, money, relative, telHref, date } from "@/lib/format";
-import { STAGE_LABELS, STATUS_COLORS, STATUS_LABELS } from "@/lib/labels";
-import { Avatar, Badge, Button, Card, Empty } from "@/components/ui";
+import { PROBLEM_STATUS_LABELS, SOLVABLE_COLORS, SOLVABLE_LABELS, STAGE_LABELS, STATUS_COLORS, STATUS_LABELS } from "@/lib/labels";
+import { Avatar, Badge, Button, Card, Empty, Input, Select } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { Timeline } from "@/components/timeline";
 import { NoteForm } from "@/components/note-form";
@@ -32,7 +34,7 @@ export default async function ContactPage({ params }: PageProps<"/contacts/[id]"
   const contact = await db.query.contacts.findFirst({ where: eq(contacts.id, id) });
   if (!contact) notFound();
 
-  const [company, acts, contactDeals, taskRows, memberships, allLists, recs] = await Promise.all([
+  const [company, acts, contactDeals, taskRows, memberships, allLists, recs, probs, themes] = await Promise.all([
     contact.companyId ? db.query.companies.findFirst({ where: eq(companies.id, contact.companyId) }) : null,
     db.select().from(activities).where(eq(activities.contactId, id)).orderBy(desc(activities.occurredAt)),
     db.select().from(deals).where(eq(deals.contactId, id)).orderBy(desc(deals.createdAt)),
@@ -44,6 +46,8 @@ export default async function ContactPage({ params }: PageProps<"/contacts/[id]"
       .where(eq(listMembers.contactId, id)),
     db.select({ id: lists.id, name: lists.name }).from(lists),
     db.select().from(recordings).where(eq(recordings.contactId, id)).orderBy(desc(recordings.createdAt)),
+    db.select().from(problems).where(eq(problems.contactId, id)).orderBy(desc(problems.createdAt)),
+    existingThemes(),
   ]);
 
   const openTasks = taskRows.filter((t) => !t.completedAt);
@@ -146,6 +150,50 @@ export default async function ContactPage({ params }: PageProps<"/contacts/[id]"
               </div>
             </Card>
           )}
+
+          <Card
+            title={`Problems (${probs.length})`}
+            action={
+              <Link href="/opportunities" className="text-xs text-accent-300 hover:text-accent-400">
+                Opportunities
+              </Link>
+            }
+          >
+            {probs.length > 0 && (
+              <ul className="divide-y divide-ink-700/60 border-b border-ink-700">
+                {probs.map((p) => (
+                  <li key={p.id} className="space-y-1 px-4 py-2.5 text-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-zinc-100">{p.title}</span>
+                      <Badge className={SOLVABLE_COLORS[p.solvable]}>{SOLVABLE_LABELS[p.solvable]}</Badge>
+                    </div>
+                    <div className="text-xs text-zinc-500">
+                      {p.theme} · {PROBLEM_STATUS_LABELS[p.status]}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <details className="p-4">
+              <summary className="cursor-pointer text-sm text-accent-300 hover:text-accent-400">+ Add a problem</summary>
+              <form action={createProblem} className="mt-3 space-y-2">
+                <input type="hidden" name="contactId" value={id} />
+                <Input name="title" placeholder="What's the problem?" required />
+                <Input name="theme" placeholder="Theme, e.g. Missed calls after hours" list="problem-themes" />
+                <datalist id="problem-themes">
+                  {themes.map((t) => (
+                    <option key={t} value={t} />
+                  ))}
+                </datalist>
+                <Select name="solvable" defaultValue="no">
+                  <option value="yes">I can solve this now</option>
+                  <option value="partially">Partly</option>
+                  <option value="no">Not yet</option>
+                </Select>
+                <Button type="submit" variant="primary" size="sm">Save problem</Button>
+              </form>
+            </details>
+          </Card>
 
           <Card title={`Tasks (${openTasks.length})`}>
             {openTasks.length > 0 && (

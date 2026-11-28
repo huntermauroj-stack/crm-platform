@@ -1,4 +1,4 @@
-import type { CallOutcome, ContactStatus, DealStage, ActivityType } from "@/db/schema";
+import type { CallOutcome, ContactStatus, DealStage, ActivityType, ProblemStatus, Solvability } from "@/db/schema";
 
 export const STATUS_LABELS: Record<ContactStatus, string> = {
   prospect: "Prospect",
@@ -79,4 +79,24 @@ export const ACTIVITY_LABELS: Record<ActivityType, string> = {
   meeting: "Meeting",
   sms: "Text",
   linkedin: "LinkedIn",
+};
+
+export const SOLVABLE_LABELS: Record<Solvability, string> = {
+  yes: "Solvable now",
+  partially: "Partly solvable",
+  no: "Not yet",
+};
+
+export const SOLVABLE_COLORS: Record<Solvability, string> = {
+  yes: "bg-emerald-500/15 text-emerald-300 ring-emerald-500/30",
+  partially: "bg-amber-500/15 text-amber-300 ring-amber-500/30",
+  no: "bg-fuchsia-500/15 text-fuchsia-300 ring-fuchsia-500/30",
+};
+
+export const PROBLEM_STATUS_LABELS: Record<ProblemStatus, string> = {
+  open: "Open",
+  can_solve_now: "Ready to pitch",
+  pitched: "Pitched",
+  solved: "Solved",
+  not_a_fit: "Not a fit",
 };

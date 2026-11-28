@@ -42,21 +42,23 @@ jobs:
       - name: Package Windows installer
         run: npx electron-builder --win --x64 --publish never
 
+      - name: Check update files exist
+        shell: bash
+        run: ls dist && test -f dist/latest.yml && cat dist/latest.yml
+
       - uses: actions/upload-artifact@v4
         with:
           name: Rapport-Setup
-          path: |
-            dist/*.exe
-            dist/latest.yml
+          path: dist/*.exe
           retention-days: 30
 
       - name: Publish release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          # The in-app updater reads latest.yml from the newest release and downloads the installer it names.
           tag_name: v0.2.${{ github.run_number }}
           name: Rapport 0.2.${{ github.run_number }}
+          # latest.yml and the blockmap are what the app's auto-updater reads.
           files: |
             dist/*.exe
             dist/*.exe.blockmap

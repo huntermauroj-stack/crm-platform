@@ -16,6 +16,7 @@ const NAV: { href: string; label: string; icon: IconName; group?: string }[] = [
   { href: "/import", label: "Import", icon: "upload" },
   { href: "/pipeline", label: "Pipeline", icon: "pipeline", group: "Sales" },
   { href: "/clients", label: "Clients", icon: "target" },
+  { href: "/opportunities", label: "Opportunities", icon: "sparkles" },
   { href: "/recordings", label: "Call recordings", icon: "mic" },
   { href: "/settings", label: "Settings", icon: "settings", group: " " },
 ];

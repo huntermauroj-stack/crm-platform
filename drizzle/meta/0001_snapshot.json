@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "8f68f305-6aea-419a-a932-315aecd64d60",
+  "id": "45b9f893-a189-428c-babd-13368fa49245",
   "prevId": "ec490345-a2e3-4c52-9a88-c91dcbe4895a",
   "tables": {
     "activities": {
@@ -77,9 +77,9 @@
           "notNull": false,
           "autoincrement": false
         },
-        "external_id": {
-          "name": "external_id",
-          "type": "text",
+        "problems_scanned_at": {
+          "name": "problems_scanned_at",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -115,13 +115,6 @@
             "occurred_at"
           ],
           "isUnique": false
-        },
-        "activities_external_idx": {
-          "name": "activities_external_idx",
-          "columns": [
-            "external_id"
-          ],
-          "isUnique": true
         }
       },
       "foreignKeys": {
@@ -739,6 +732,186 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "problems": {
+      "name": "problems",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "contact_id": {
+          "name": "contact_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "company_id": {
+          "name": "company_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "activity_id": {
+          "name": "activity_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "recording_id": {
+          "name": "recording_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "theme": {
+          "name": "theme",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "detail": {
+          "name": "detail",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "solvable": {
+          "name": "solvable",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'no'"
+        },
+        "solvable_note": {
+          "name": "solvable_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'open'"
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'manual'"
+        },
+        "checked_at": {
+          "name": "checked_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "problems_theme_idx": {
+          "name": "problems_theme_idx",
+          "columns": [
+            "theme"
+          ],
+          "isUnique": false
+        },
+        "problems_contact_idx": {
+          "name": "problems_contact_idx",
+          "columns": [
+            "contact_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "problems_contact_id_contacts_id_fk": {
+          "name": "problems_contact_id_contacts_id_fk",
+          "tableFrom": "problems",
+          "tableTo": "contacts",
+          "columnsFrom": [
+            "contact_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "problems_company_id_companies_id_fk": {
+          "name": "problems_company_id_companies_id_fk",
+          "tableFrom": "problems",
+          "tableTo": "companies",
+          "columnsFrom": [
+            "company_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "problems_activity_id_activities_id_fk": {
+          "name": "problems_activity_id_activities_id_fk",
+          "tableFrom": "problems",
+          "tableTo": "activities",
+          "columnsFrom": [
+            "activity_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "problems_recording_id_recordings_id_fk": {
+          "name": "problems_recording_id_recordings_id_fk",
+          "tableFrom": "problems",
+          "tableTo": "recordings",
+          "columnsFrom": [
+            "recording_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "recordings": {
       "name": "recordings",
       "columns": {
@@ -916,13 +1089,6 @@
           "notNull": false,
           "autoincrement": false
         },
-        "external_id": {
-          "name": "external_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
@@ -939,13 +1105,6 @@
             "due_at"
           ],
           "isUnique": false
-        },
-        "tasks_external_idx": {
-          "name": "tasks_external_idx",
-          "columns": [
-            "external_id"
-          ],
-          "isUnique": true
         }
       },
       "foreignKeys": {

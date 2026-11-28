@@ -7,7 +7,7 @@ import type { CallAnalysis } from "@/lib/analysis-schema";
 import { applyAnalysis, deleteRecording } from "@/lib/recording-actions";
 import { aiConfigured } from "@/lib/analyze";
 import { dateTime, duration, fullName } from "@/lib/format";
-import { OUTCOME_LABELS, STAGE_LABELS, STATUS_LABELS } from "@/lib/labels";
+import { OUTCOME_LABELS, SOLVABLE_COLORS, SOLVABLE_LABELS, STAGE_LABELS, STATUS_LABELS } from "@/lib/labels";
 import { Badge, Button, Card, Empty, Select } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { RecordingProgress } from "@/components/recording-uploader";
@@ -116,6 +116,22 @@ export default async function RecordingPage({ params }: PageProps<"/recordings/[
             >
               <div className="space-y-5 p-4">
                 <p className="text-sm leading-relaxed text-zinc-200">{a.summary}</p>
+                {(a.problems?.length ?? 0) > 0 && (
+                  <div>
+                    <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-zinc-500">Problems raised</div>
+                    <ul className="space-y-2">
+                      {a.problems!.map((p, k) => (
+                        <li key={k} className="flex items-start gap-2 text-sm">
+                          <Badge className={SOLVABLE_COLORS[p.solvable]}>{SOLVABLE_LABELS[p.solvable]}</Badge>
+                          <span className="min-w-0">
+                            <span className="text-zinc-200">{p.title}</span>
+                            <span className="block text-xs text-zinc-500">{p.solvableNote}</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <div className="grid gap-5 sm:grid-cols-2">
                   <List title="Pain points" items={a.painPoints} />
                   <List title="Key points" items={a.keyPoints} />
@@ -197,6 +213,13 @@ export default async function RecordingPage({ params }: PageProps<"/recordings/[
                   </div>
                 )}
                 <Check name="summary" label="Add the call summary to the timeline" detail={`Suggested outcome: ${OUTCOME_LABELS[a.suggestedOutcome]}`} />
+                {(a.problems?.length ?? 0) > 0 && (
+                  <Check
+                    name="problems"
+                    label={`Track ${a.problems!.length} problem${a.problems!.length === 1 ? "" : "s"} in Opportunities`}
+                    detail={a.problems!.map((p) => `${p.title} (${SOLVABLE_LABELS[p.solvable].toLowerCase()})`).join("\n")}
+                  />
+                )}
                 {a.painPoints.length > 0 && <Check name="painPoints" label="Save pain points" detail={a.painPoints.join("\n")} />}
                 {a.personalNotes.length > 0 && <Check name="personalNotes" label="Save rapport notes" detail={a.personalNotes.join("\n")} />}
                 {a.currentTools.length > 0 && <Check name="currentTools" label="Add to company tech stack" detail={a.currentTools.join(", ")} />}

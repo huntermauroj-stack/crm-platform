@@ -12,15 +12,15 @@
     {
       "idx": 1,
       "version": "6",
-      "when": 1795823500257,
-      "tag": "0001_google_sync",
+      "when": 1795822575460,
+      "tag": "0001_opportunities",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "6",
-      "when": 1795835405700,
-      "tag": "0002_email_section",
+      "when": 1795836241285,
+      "tag": "0002_google_and_email",
       "breakpoints": true
     }
   ]

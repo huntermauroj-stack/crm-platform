@@ -15,5 +15,9 @@ CREATE TABLE `email_templates` (
 	`updated_at` integer DEFAULT (unixepoch()) NOT NULL
 );
 --> statement-breakpoint
+ALTER TABLE `activities` ADD `external_id` text;--> statement-breakpoint
 ALTER TABLE `activities` ADD `campaign_id` integer REFERENCES email_campaigns(id);--> statement-breakpoint
-CREATE INDEX `activities_campaign_idx` ON `activities` (`campaign_id`);
+CREATE INDEX `activities_campaign_idx` ON `activities` (`campaign_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `activities_external_idx` ON `activities` (`external_id`);--> statement-breakpoint
+ALTER TABLE `tasks` ADD `external_id` text;--> statement-breakpoint
+CREATE UNIQUE INDEX `tasks_external_idx` ON `tasks` (`external_id`);

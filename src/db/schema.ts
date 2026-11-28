@@ -115,6 +115,8 @@ export const activities = sqliteTable(
     externalId: text("external_id"),
     /** Set on emails sent as part of a campaign (bulk send). */
     campaignId: integer("campaign_id").references(() => emailCampaigns.id, { onDelete: "set null" }),
+    /** When call notes were scanned for problems (Opportunities). */
+    problemsScannedAt: integer("problems_scanned_at", { mode: "timestamp" }),
     occurredAt: integer("occurred_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
     createdAt: createdAt(),
   },
@@ -190,6 +192,37 @@ export const recordings = sqliteTable("recordings", {
   createdAt: createdAt(),
 });
 
+export const SOLVABILITY = ["yes", "partially", "no"] as const;
+export type Solvability = (typeof SOLVABILITY)[number];
+
+export const PROBLEM_STATUSES = ["open", "can_solve_now", "pitched", "solved", "not_a_fit"] as const;
+export type ProblemStatus = (typeof PROBLEM_STATUSES)[number];
+
+/** A business problem a prospect or client mentioned, tracked so it can be revisited as offers change. */
+export const problems = sqliteTable(
+  "problems",
+  {
+    id: id(),
+    contactId: integer("contact_id").references(() => contacts.id, { onDelete: "cascade" }),
+    companyId: integer("company_id").references(() => companies.id, { onDelete: "set null" }),
+    activityId: integer("activity_id").references(() => activities.id, { onDelete: "set null" }),
+    recordingId: integer("recording_id").references(() => recordings.id, { onDelete: "set null" }),
+    /** Short normalized theme used to group the same problem across prospects. */
+    theme: text("theme").notNull(),
+    title: text("title").notNull(),
+    detail: text("detail"),
+    /** Can it be solved with the offers you had when it was recorded/re-checked? */
+    solvable: text("solvable").$type<Solvability>().notNull().default("no"),
+    solvableNote: text("solvable_note"),
+    status: text("status").$type<ProblemStatus>().notNull().default("open"),
+    source: text("source").$type<"recording" | "notes" | "manual">().notNull().default("manual"),
+    checkedAt: integer("checked_at", { mode: "timestamp" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("problems_theme_idx").on(t.theme), index("problems_contact_idx").on(t.contactId)],
+);
+
+export type Problem = typeof problems.$inferSelect;
 export type Company = typeof companies.$inferSelect;
 export type Contact = typeof contacts.$inferSelect;
 export type Deal = typeof deals.$inferSelect;

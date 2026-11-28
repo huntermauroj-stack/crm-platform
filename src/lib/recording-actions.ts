@@ -8,6 +8,7 @@ import { activities, companies, contacts, deals, recordings, tasks } from "@/db/
 import type { CallAnalysis } from "./analysis-schema";
 import { findOrCreateCompany } from "./actions";
 import { addDays, fullName } from "./format";
+import { saveProblems } from "./problems";
 
 function mergeLines(existing: string | null, add: string[]) {
   const have = new Set((existing ?? "").split("\n").map((l) => l.replace(/^[-•]\s*/, "").trim().toLowerCase()));
@@ -135,6 +136,13 @@ export async function applyAnalysis(recordingId: number, fd: FormData) {
       notes: a.nextSteps.join("\n") || null,
     });
     await db.update(contacts).set({ nextFollowUpAt: due }).where(eq(contacts.id, contactId));
+  }
+
+  // 5. Problems -> Opportunities
+  if (on("problems") && a.problems?.length) {
+    const fresh = await db.query.recordings.findFirst({ where: eq(recordings.id, recordingId), columns: { activityId: true } });
+    await saveProblems(a.problems, { contactId, activityId: fresh?.activityId ?? null, recordingId, source: "recording" });
+    if (fresh?.activityId) await db.update(activities).set({ problemsScannedAt: now }).where(eq(activities.id, fresh.activityId));
   }
 
   await db.update(recordings).set({ analysisAppliedAt: now }).where(eq(recordings.id, recordingId));
