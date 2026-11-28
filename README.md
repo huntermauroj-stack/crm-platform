@@ -84,3 +84,9 @@ Next.js 16 (App Router, server actions), SQLite through libSQL and Drizzle ORM, 
 | `npm run dist:win` | Build the Windows installer into `dist/` (run on Windows; CI does this automatically) |
 | `npm run db:generate` | Create a migration after editing `src/db/schema.ts` (applied automatically on next start) |
 | `npm run typecheck` / `npm run lint` | Checks |
+
+## Emails
+
+- **Contacts → tick people → Email selected** opens a send screen for just those contacts. Pick a template, check the preview, send a test to yourself, then send. Each email goes out individually from your Gmail and is logged on the contact's timeline.
+- **Emails** (sidebar) has four tabs: **Activity** (every email to and from your contacts), **Follow-ups** (unanswered emails, and people who haven't replied in 3+ days), **Campaigns** (each bulk send with sent, replied and reply rate, plus "follow up with everyone who didn't reply"), and **Templates** (edit your library; merge fields `{first}`, `{name}`, `{company}`, `{preview}`, `{website}`, `{issue}`).
+- **Daily send limit** (Templates tab, default 150): bulk sends stop once Rapport has sent that many emails today.

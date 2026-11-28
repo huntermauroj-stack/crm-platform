@@ -20,6 +20,8 @@ import { ContactForm } from "@/components/contact-form";
 import { LogCallPanel } from "@/components/log-call-panel";
 import { RecordingUploader } from "@/components/recording-uploader";
 import { AddToList } from "@/components/add-to-list";
+import { GoogleQuickActions } from "@/components/google-quick-actions";
+import { googleReady } from "@/lib/google-sync";
 
 export async function generateMetadata({ params }: PageProps<"/contacts/[id]">) {
   const { id } = await params;
@@ -91,17 +93,25 @@ export default async function ContactPage({ params }: PageProps<"/contacts/[id]"
               Office: {contact.phone}
             </a>
           )}
-          {contact.email && (
-            <a href={`mailto:${contact.email}`} className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-300 ring-1 ring-ink-600 hover:bg-ink-800">
-              <Icon name="mail" /> Email
-            </a>
-          )}
           {contact.linkedinUrl && (
             <a href={contact.linkedinUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-300 ring-1 ring-ink-600 hover:bg-ink-800">
               <Icon name="link" /> LinkedIn
             </a>
           )}
         </div>
+      </div>
+
+      <div className="-mt-3 mb-6 flex justify-end">
+        <GoogleQuickActions
+          contactId={id}
+          firstName={contact.firstName}
+          fullName={fullName(contact)}
+          company={company?.name ?? null}
+          email={contact.email}
+          phone={phone}
+          notes={contact.notes}
+          googleConnected={googleReady()}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

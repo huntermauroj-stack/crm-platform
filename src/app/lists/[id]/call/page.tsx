@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, desc, eq, sql } from "drizzle-orm";
 import QRCode from "qrcode";
+import { GoogleQuickActions } from "@/components/google-quick-actions";
+import { googleReady } from "@/lib/google-sync";
 import { db } from "@/db";
 import { activities, companies, contacts, listMembers, lists, deals } from "@/db/schema";
 import { Badge, Card, LinkButton, Empty } from "@/components/ui";
@@ -139,6 +141,20 @@ export default async function CallPage({ params }: PageProps<"/lists/[id]/call">
                 )}
               </div>
             )}
+            <div className="mt-4 border-t border-ink-700 pt-4">
+              <GoogleQuickActions
+                key={c.id}
+                compact
+                contactId={c.id}
+                firstName={c.firstName}
+                fullName={fullName(c)}
+                company={company?.name ?? null}
+                email={c.email}
+                phone={phone}
+                notes={c.notes}
+                googleConnected={googleReady()}
+              />
+            </div>
           </Card>
 
           <Card title="Log this call">

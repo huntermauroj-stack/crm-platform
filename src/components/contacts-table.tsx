@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { addContactsToList, setContactStatus } from "@/lib/actions";
 import { CONTACT_STATUSES, type ContactStatus } from "@/db/schema";
 import { STATUS_COLORS, STATUS_LABELS } from "@/lib/labels";
 import { fullName, initials, isPast, relative, telHref } from "@/lib/format";
 import { Avatar, Badge, Button, Empty, Select } from "./ui";
+import { Icon } from "./icons";
 
 type Row = {
   id: number;
@@ -37,6 +39,15 @@ export function ContactsTable({ rows, lists }: { rows: Row[]; lists: { id: numbe
       return n;
     });
   const allOn = rows.length > 0 && selected.size === rows.length;
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const withEmail = rows.filter((r) => selected.has(r.id) && r.email).length;
+  const emailSelected = () => {
+    const ids = rows.filter((r) => selected.has(r.id)).map((r) => r.id);
+    const back = `${pathname}${params.size ? `?${params}` : ""}`;
+    router.push(`/email?ids=${ids.join(",")}&back=${encodeURIComponent(back)}`);
+  };
 
   if (!rows.length) return <Empty title="No contacts match">Try a different search, or import a CSV of prospects.</Empty>;
 
@@ -44,7 +55,17 @@ export function ContactsTable({ rows, lists }: { rows: Row[]; lists: { id: numbe
     <div>
       {selected.size > 0 && (
         <div className="flex flex-wrap items-center gap-2 border-b border-ink-700 bg-accent-500/5 px-4 py-2 text-sm">
-          <span className="text-zinc-300">{selected.size} selected</span>
+          <span className="text-zinc-300">
+            {selected.size} selected
+            {!allOn && rows.length > selected.size && (
+              <button type="button" className="ml-2 text-accent-300 hover:text-accent-400" onClick={() => setSelected(new Set(rows.map((r) => r.id)))}>
+                Select all {rows.length}
+              </button>
+            )}
+          </span>
+          <Button size="sm" variant="primary" onClick={emailSelected} title={`${withEmail} of ${selected.size} have an email address`}>
+            <Icon name="mail" /> Email selected ({withEmail})
+          </Button>
           <Select
             className="!w-48 !py-1"
             defaultValue=""

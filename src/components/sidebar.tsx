@@ -12,6 +12,7 @@ const NAV: { href: string; label: string; icon: IconName; group?: string }[] = [
   { href: "/lists", label: "Call lists", icon: "phone", group: "Prospecting" },
   { href: "/contacts", label: "Contacts", icon: "users" },
   { href: "/companies", label: "Companies", icon: "building" },
+  { href: "/emails", label: "Emails", icon: "mail" },
   { href: "/import", label: "Import", icon: "upload" },
   { href: "/pipeline", label: "Pipeline", icon: "pipeline", group: "Sales" },
   { href: "/clients", label: "Clients", icon: "target" },
