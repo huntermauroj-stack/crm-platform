@@ -1,0 +1,115 @@
+{
+  "name": "rapport",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "setup": "npm install && npm run db:migrate",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start -H 127.0.0.1 -p 3000",
+    "app": "next build && next start -H 127.0.0.1 -p 3000",
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "db:migrate": "tsx scripts/migrate.mts",
+    "db:generate": "drizzle-kit generate",
+    "db:studio": "drizzle-kit studio",
+    "seed": "tsx scripts/seed.mts",
+    "desktop": "next build && electron .",
+    "dist:win": "next build && electron-builder --win --x64 --publish never"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.14.0",
+    "@huggingface/transformers": "^4.3.2",
+    "@libsql/client": "^0.18.0",
+    "drizzle-orm": "^0.45.4",
+    "electron-updater": "6.8.11",
+    "next": "16.4.6",
+    "papaparse": "^5.7.1",
+    "qrcode": "^1.5.4",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "4.3.3",
+    "@types/node": "^20",
+    "@types/papaparse": "^5.5.2",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.11",
+    "electron": "45.2.3",
+    "electron-builder": "26.18.1",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.6",
+    "tailwindcss": "4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "^5"
+  },
+  "main": "electron/main.cjs",
+  "description": "Personal CRM and cold-calling workspace",
+  "author": "Hunter",
+  "build": {
+    "appId": "com.huntermauro.rapport",
+    "productName": "Rapport",
+    "asar": false,
+    "npmRebuild": false,
+    "directories": {
+      "output": "dist",
+      "buildResources": "electron"
+    },
+    "files": [
+      "package.json",
+      "next.config.mjs",
+      "electron/**",
+      "public/**",
+      "drizzle/**",
+      ".next/**",
+      "!.next/cache/**",
+      "!.next/dev/**",
+      "!.next/trace*",
+      "node_modules/**",
+      "!node_modules/onnxruntime-node/bin/napi-v*/darwin/**",
+      "!node_modules/onnxruntime-node/bin/napi-v*/linux/**",
+      "!**/*.map",
+      "!**/*.md",
+      "!**/*.d.ts",
+      "!electron/after-pack.cjs"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "electron/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Rapport",
+      "artifactName": "Rapport-Setup-${version}.exe",
+      "installerIcon": "electron/icon.ico",
+      "uninstallerIcon": "electron/icon.ico"
+    },
+    "linux": {
+      "target": "dir"
+    },
+    "afterPack": "electron/after-pack.cjs",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "huntermauroj-stack",
+        "repo": "crm-platform",
+        "releaseType": "release"
+      }
+    ]
+  }
+}
